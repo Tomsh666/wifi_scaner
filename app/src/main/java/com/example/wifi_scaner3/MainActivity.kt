@@ -16,7 +16,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import android.content.IntentFilter
+import android.net.wifi.ScanResult
 import android.net.wifi.WifiManager.SCAN_RESULTS_AVAILABLE_ACTION
+import android.util.Log
+import android.widget.ArrayAdapter
+import android.widget.ListView
 
 
 class MainActivity : AppCompatActivity() {
@@ -33,10 +37,10 @@ class MainActivity : AppCompatActivity() {
     private val requestPermissionLauncher: ActivityResultLauncher<String> =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
-                showToast("$currentPermission granted")
+                Log.d("Tag","$currentPermission granted")
             } else {
                 if (!shouldShowRequestPermissionRationale(currentPermission)) {
-                    showToast("$currentPermission granted")
+                    Log.d("Tag","$currentPermission granted")
                     showPermissionRequiredDialog()
                 }
             }
@@ -51,8 +55,8 @@ class MainActivity : AppCompatActivity() {
         wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         val button: Button = findViewById(R.id.scan_button)
         val filter = IntentFilter(SCAN_RESULTS_AVAILABLE_ACTION)
-        registerReceiver(wifiScanReceiver,filter)
         requestPermissions()
+        registerReceiver(wifiScanReceiver,filter)
         button.setOnClickListener{
             startWifiScan()
         }
@@ -67,6 +71,7 @@ class MainActivity : AppCompatActivity() {
         if (wifiManager.isWifiEnabled) {
             // Запуск сканирования Wi-Fi
             wifiManager.startScan()
+            handleScanResults()
         } else {
             wifiManager.isWifiEnabled = true
         }
@@ -78,7 +83,18 @@ class MainActivity : AppCompatActivity() {
                 currentPermission = permission
                 requestPermissionLauncher.launch(permission)
             }
-            showToast("$permission Permissions granted")
+            Log.d("Tag","$permission Permissions granted")
+        }
+    }
+
+    private fun handleScanResults() {
+        val wifiListView : ListView = findViewById(R.id.table)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        ) {
+            val scanResults: List<ScanResult> = wifiManager.scanResults
+            Log.d("Tag", "$scanResults")
+            val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, scanResults.map { it.SSID })
+            wifiListView.adapter = adapter
         }
     }
 
@@ -111,9 +127,4 @@ class MainActivity : AppCompatActivity() {
         intent.data = Uri.fromParts("package", packageName, null)
         startActivity(intent)
     }
-
-    private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
-
 }

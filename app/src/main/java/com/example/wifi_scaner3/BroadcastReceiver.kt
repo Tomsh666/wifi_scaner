@@ -14,12 +14,6 @@ import androidx.core.content.ContextCompat
 val wifiScanReceiver: BroadcastReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == WifiManager.SCAN_RESULTS_AVAILABLE_ACTION) {
-            val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                val scanResults: List<ScanResult> = wifiManager.scanResults
-                Log.d("Tag","$scanResults")
-            }
-
         }
         StringBuilder().apply {
             append("Action: ${intent.action}\n")
