@@ -15,23 +15,11 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
-import android.content.BroadcastReceiver
 import android.content.IntentFilter
-import android.net.wifi.ScanResult
 import android.net.wifi.WifiManager.SCAN_RESULTS_AVAILABLE_ACTION
-import android.util.Log
-import androidx.core.app.ActivityCompat
+
 
 class MainActivity : AppCompatActivity() {
-
-    private lateinit var wifiManager: WifiManager
-    private val wifiScanReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == SCAN_RESULTS_AVAILABLE_ACTION) {
-                requestPermissions()
-            }
-        }
-    }
 
     private val permissionsToRequest = arrayOf(
         Manifest.permission.ACCESS_WIFI_STATE,
@@ -39,6 +27,8 @@ class MainActivity : AppCompatActivity() {
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION
     )
+
+    private lateinit var wifiManager: WifiManager
 
     private val requestPermissionLauncher: ActivityResultLauncher<String> =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -62,6 +52,7 @@ class MainActivity : AppCompatActivity() {
         val button: Button = findViewById(R.id.scan_button)
         val filter = IntentFilter(SCAN_RESULTS_AVAILABLE_ACTION)
         registerReceiver(wifiScanReceiver,filter)
+        requestPermissions()
         button.setOnClickListener{
             startWifiScan()
         }
@@ -83,9 +74,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestPermissions() {
         for (permission in permissionsToRequest) {
-            if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-                val scanResults: List<ScanResult> = wifiManager.scanResults
-            } else {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
                 currentPermission = permission
                 requestPermissionLauncher.launch(permission)
             }
