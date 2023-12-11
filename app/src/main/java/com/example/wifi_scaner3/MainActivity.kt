@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.wifi_scaner3
 
 import android.Manifest
@@ -10,7 +12,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
-import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -34,19 +35,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var wifiManager: WifiManager
 
-    private val requestPermissionLauncher: ActivityResultLauncher<String> =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (isGranted) {
-                Log.d("Tag","$currentPermission granted")
-            } else {
-                if (!shouldShowRequestPermissionRationale(currentPermission)) {
-                    Log.d("Tag","$currentPermission granted")
-                    showPermissionRequiredDialog()
-                }
-            }
-        }
-
-    val PERMISSION_REQUEST_CODE=123
     private var currentPermission: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,35 +45,20 @@ class MainActivity : AppCompatActivity() {
         val filter = IntentFilter(SCAN_RESULTS_AVAILABLE_ACTION)
         requestPermissions()
         registerReceiver(wifiScanReceiver,filter)
+        startWifiScan()
         button.setOnClickListener{
-            startWifiScan()
+            handleScanResults()
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        unregisterReceiver(wifiScanReceiver)
     }
 
     private fun startWifiScan() {
-        if (wifiManager.isWifiEnabled) {
-            // Запуск сканирования Wi-Fi
-            wifiManager.startScan()
-            handleScanResults()
-        } else {
+        if (!wifiManager.isWifiEnabled) {
             wifiManager.isWifiEnabled = true
         }
+        wifiManager.startScan()
+
     }
 
-    private fun requestPermissions() {
-        for (permission in permissionsToRequest) {
-            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                currentPermission = permission
-                requestPermissionLauncher.launch(permission)
-            }
-            Log.d("Tag","$permission Permissions granted")
-        }
-    }
 
     private fun handleScanResults() {
         val wifiListView : ListView = findViewById(R.id.table)
@@ -98,20 +71,33 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            PERMISSION_REQUEST_CODE -> {
-                if ((grantResults.isNotEmpty() &&
-                            grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                } else {
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(wifiScanReceiver)
+    }
+
+    private val requestPermissionLauncher: ActivityResultLauncher<String> =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                Log.d("Tag","$currentPermission granted")
+            } else {
+                if (!shouldShowRequestPermissionRationale(currentPermission)) {
+                    Log.d("Tag","$currentPermission granted")
+                    showPermissionRequiredDialog()
                 }
-                return
-            }
-            else -> {
             }
         }
+
+    private fun requestPermissions() {
+        for (permission in permissionsToRequest) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                currentPermission = permission
+                requestPermissionLauncher.launch(permission)
+            }
+            Log.d("Tag","$permission Permissions granted")
+        }
     }
+
 
     private fun showPermissionRequiredDialog() {
         AlertDialog.Builder(this)
