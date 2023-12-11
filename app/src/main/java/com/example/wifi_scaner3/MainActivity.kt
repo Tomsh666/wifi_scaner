@@ -27,8 +27,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var wifiManager: WifiManager
     private val wifiScanReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == WifiManager.SCAN_RESULTS_AVAILABLE_ACTION) {
-                handleScanResults()
+            if (intent?.action == SCAN_RESULTS_AVAILABLE_ACTION) {
+                requestPermissions()
             }
         }
     }
@@ -60,19 +60,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         val button: Button = findViewById(R.id.scan_button)
-        val br: BroadcastReceiver = broadcastReceiver()
         val filter = IntentFilter(SCAN_RESULTS_AVAILABLE_ACTION)
-        val listenToBroadcastsFromOtherApps = false
-        val receiverFlags = if (listenToBroadcastsFromOtherApps) {
-            ContextCompat.RECEIVER_EXPORTED
-        } else {
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        }
-        registerReceiver(br, filter, receiverFlags)
         registerReceiver(wifiScanReceiver,filter)
-        Log.d("Tag", "Receiver registered successfully")
         button.setOnClickListener{
-            requestPermissions()
             startWifiScan()
         }
     }
@@ -87,25 +77,14 @@ class MainActivity : AppCompatActivity() {
             // Запуск сканирования Wi-Fi
             wifiManager.startScan()
         } else {
-            // Если Wi-Fi выключен, вы можете попытаться включить его
             wifiManager.isWifiEnabled = true
-        }
-    }
-
-    private fun handleScanResults() {
-        // Получение результатов сканирования
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            val scanResults: List<ScanResult> = wifiManager.scanResults
-            Log.d("Tag","$scanResults")
-        } else {
-            // Permission is not granted, request it
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), PERMISSION_REQUEST_CODE)
         }
     }
 
     private fun requestPermissions() {
         for (permission in permissionsToRequest) {
             if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+                val scanResults: List<ScanResult> = wifiManager.scanResults
             } else {
                 currentPermission = permission
                 requestPermissionLauncher.launch(permission)
@@ -120,9 +99,7 @@ class MainActivity : AppCompatActivity() {
             PERMISSION_REQUEST_CODE -> {
                 if ((grantResults.isNotEmpty() &&
                             grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                            showToast("Granted")
                 } else {
-                    showToast("Denied")
                 }
                 return
             }
