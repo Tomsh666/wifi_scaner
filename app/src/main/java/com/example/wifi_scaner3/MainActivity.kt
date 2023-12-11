@@ -22,6 +22,7 @@ import android.net.wifi.WifiManager.SCAN_RESULTS_AVAILABLE_ACTION
 import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.ListView
+import android.widget.TextView
 
 
 class MainActivity : AppCompatActivity() {
@@ -68,7 +69,45 @@ class MainActivity : AppCompatActivity() {
             Log.d("Tag", "$scanResults")
             val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, scanResults.map { it.SSID })
             wifiListView.adapter = adapter
+            wifiListView.setOnItemClickListener { _, _, position, _ ->
+                val selectedNetwork: ScanResult = wifiManager.scanResults[position]
+                showNetworkDetails(selectedNetwork)
+            }
         }
+    }
+
+    private fun showNetworkDetails(selectedNetwork: ScanResult) {
+        val dialogView = layoutInflater.inflate(R.layout.wifi_details_activity, null)
+
+        val textSSID: TextView = dialogView.findViewById(R.id.textSSID)
+        textSSID.text = "SSID: ${selectedNetwork.SSID}"
+
+        val textBSSID: TextView = dialogView.findViewById(R.id.textBSSID)
+        textBSSID.text = "BSSID: ${selectedNetwork.BSSID}"
+
+        val signalStrengthText = when {
+            selectedNetwork.level > -50 -> "Excellent"
+            selectedNetwork.level in -60..-50 -> "Good"
+            selectedNetwork.level in -70..-60 -> "Fair"
+            selectedNetwork.level < -70 -> "Weak"
+            else -> "No signal"
+        }
+        val textSignalStrength: TextView = dialogView.findViewById(R.id.textSignalStrength)
+        textSignalStrength.text = "Signal Strength: $signalStrengthText"
+
+
+        val textFrequency: TextView = dialogView.findViewById(R.id.Freqency)
+        textFrequency.text = "Frequency: ${selectedNetwork.frequency} MHz"
+
+        val textCapability: TextView = dialogView.findViewById(R.id.Capability)
+        textCapability.text = "Capability: ${selectedNetwork.capabilities}"
+
+        val alertDialogBuilder = AlertDialog.Builder(this)
+            .setTitle("Network Details")
+            .setView(dialogView)
+            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+
+        alertDialogBuilder.show()
     }
 
     override fun onDestroy() {
