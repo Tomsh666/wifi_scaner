@@ -3,6 +3,7 @@
 package com.example.wifi_scaner3
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -76,6 +77,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun showNetworkDetails(selectedNetwork: ScanResult) {
         val dialogView = layoutInflater.inflate(R.layout.wifi_details_activity, null)
 
