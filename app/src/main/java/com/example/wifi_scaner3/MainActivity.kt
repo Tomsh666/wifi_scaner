@@ -1,4 +1,4 @@
-@file:Suppress("DEPRECATION")
+
 
 package com.example.wifi_scaner3
 
@@ -26,6 +26,7 @@ import android.widget.ListView
 import android.widget.TextView
 
 
+@Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
 
     private val permissionsToRequest = arrayOf(
@@ -38,6 +39,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var wifiManager: WifiManager
 
     private var currentPermission: String = ""
+
+    private val wifiScanReceiver = MyBroadcastReceiver { scanResults ->
+        handleScanResults(scanResults)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,24 +57,19 @@ class MainActivity : AppCompatActivity() {
         }
         button.setOnClickListener{
             wifiManager.startScan()
-            handleScanResults()
         }
     }
 
-    private fun handleScanResults() {
+    private fun handleScanResults(scanResults: List<ScanResult>) {
         val wifiListView : ListView = findViewById(R.id.table)
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        ) {
-            val scanResults: List<ScanResult> = wifiManager.scanResults
-            Log.d("Tag", "$scanResults")
-            val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, scanResults.map { it.SSID })
-            wifiListView.adapter = adapter
-            wifiListView.setOnItemClickListener { _, _, position, _ ->
-                val selectedNetwork: ScanResult = wifiManager.scanResults[position]
-                showNetworkDetails(selectedNetwork)
-            }
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, scanResults.map { it.SSID })
+        wifiListView.adapter = adapter
+        wifiListView.setOnItemClickListener { _, _, position, _ ->
+            val selectedNetwork: ScanResult = scanResults[position]
+            showNetworkDetails(selectedNetwork)
         }
     }
+
 
     @SuppressLint("SetTextI18n")
     private fun showNetworkDetails(selectedNetwork: ScanResult) {
