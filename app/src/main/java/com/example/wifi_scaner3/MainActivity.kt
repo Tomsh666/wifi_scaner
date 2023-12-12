@@ -47,20 +47,14 @@ class MainActivity : AppCompatActivity() {
         val filter = IntentFilter(SCAN_RESULTS_AVAILABLE_ACTION)
         requestPermissions()
         registerReceiver(wifiScanReceiver,filter)
-        startWifiScan()
-        button.setOnClickListener{
-            handleScanResults()
-        }
-    }
-
-    private fun startWifiScan() {
         if (!wifiManager.isWifiEnabled) {
             wifiManager.isWifiEnabled = true
         }
-        wifiManager.startScan()
-
+        button.setOnClickListener{
+            wifiManager.startScan()
+            handleScanResults()
+        }
     }
-
 
     private fun handleScanResults() {
         val wifiListView : ListView = findViewById(R.id.table)
